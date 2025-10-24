@@ -1,0 +1,20 @@
+{
+    "twitch": {
+        "client_id": "YOUR_CLIENT_ID_HERE",
+        "oauth_token": "oauth:YOUR_OAUTH_TOKEN_HERE", 
+        "channel": "YOUR_CHANNEL_NAME"
+    },
+    "commands": {
+        "new_stream": "!newstream",
+        "giveaway_start": "!giveaway",
+        "giveaway_end": "!endgiveaway",
+        "giveaway_join": "!join",
+        "check_time": "!time",
+        "pick_winner": "!pick",
+        "participants": "!participants",
+        "current_giveaway": "!current"
+    },
+    "giveaway": {
+        "min_watch_time_minutes": 30
+    }
+}

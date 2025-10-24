@@ -1,0 +1,10 @@
+
+services:
+  twitch-bot:
+    build: .
+    volumes:
+      - ./data:/app/data
+      - ./config.json:/app/config.json
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Moscow
