@@ -23,6 +23,17 @@ class TwitchBot(commands.Bot):
     async def event_ready(self):
         await self.db.init_db()
         print(f'Bot готов | {self.nick}')
+        
+        # Регистрируем команды из конфига
+        self.new_stream.name = self.config['commands']['new_stream']
+        self.start_giveaway.name = self.config['commands']['giveaway_start']
+        self.end_giveaway.name = self.config['commands']['giveaway_end']
+        self.join_giveaway.name = self.config['commands']['giveaway_join']
+        self.pick_winner.name = self.config['commands']['pick_winner']
+        self.check_time.name = self.config['commands']['check_time']
+        self.show_participants.name = self.config['commands']['participants']
+        self.current_giveaway_info.name = self.config['commands']['current_giveaway']
+        
         self.user_tracking_task = asyncio.create_task(self.track_users())
     
     async def track_users(self):
@@ -38,7 +49,7 @@ class TwitchBot(commands.Bot):
                 print(f'Ошибка отслеживания: {e}')
                 await asyncio.sleep(60)
 
-    @commands.command(name='newstream')
+    @commands.command(name=None)
     async def new_stream(self, ctx):
         if not ctx.author.is_mod and not ctx.author.is_broadcaster:
             return
@@ -46,24 +57,24 @@ class TwitchBot(commands.Bot):
         await self.db.start_new_stream()
         await ctx.send("🔴 Новый стрим начался! Время просмотра сброшено")
 
-    @commands.command(name='giveaway')
+    @commands.command(name=None)
     async def start_giveaway(self, ctx, key_name: str = None):
         if not ctx.author.is_mod and not ctx.author.is_broadcaster:
             return
         
         if not key_name:
-            await ctx.send("Использование: !giveaway <ключ>")
+            await ctx.send(f"Использование: !{self.config['commands']['giveaway_start']} <ключ>")
             return
         
         if self.current_giveaway:
-            await ctx.send(f"Уже активен розыгрыш '{self.current_giveaway}'. Завершите его командой !endgiveaway")
+            await ctx.send(f"Уже активен розыгрыш '{self.current_giveaway}'. Завершите его командой !{self.config['commands']['giveaway_end']}")
             return
         
         self.current_giveaway = key_name
         await self.db.clear_giveaway(key_name)
-        await ctx.send(f"🎉 Розыгрыш '{key_name}' начался! Участвуйте командой {self.config['commands']['giveaway_join']}")
+        await ctx.send(f"🎉 Розыгрыш '{key_name}' начался! Участвуйте командой !{self.config['commands']['giveaway_join']}")
     
-    @commands.command(name='endgiveaway')
+    @commands.command(name=None)
     async def end_giveaway(self, ctx):
         if not ctx.author.is_mod and not ctx.author.is_broadcaster:
             return
@@ -77,7 +88,7 @@ class TwitchBot(commands.Bot):
         self.current_giveaway = None
         await ctx.send(f"📝 Прием заявок в '{ended_giveaway}' завершен! Участников: {count}")
     
-    @commands.command(name='join')
+    @commands.command(name=None)
     async def join_giveaway(self, ctx):
         if not self.current_giveaway:
             await ctx.send("Нет активного розыгрыша")
@@ -95,13 +106,13 @@ class TwitchBot(commands.Bot):
         else:
             await ctx.send(f"@{ctx.author.name}, вы уже участвуете в розыгрыше '{self.current_giveaway}'")
     
-    @commands.command(name='pick')
+    @commands.command(name=None)
     async def pick_winner(self, ctx, key_name: str = None):
         if not ctx.author.is_mod and not ctx.author.is_broadcaster:
             return
         
         if not key_name:
-            await ctx.send("Использование: !pick <ключ>")
+            await ctx.send(f"Использование: !{self.config['commands']['pick_winner']} <ключ>")
             return
         
         winner = await self.db.pick_random_winner(key_name)
@@ -111,27 +122,27 @@ class TwitchBot(commands.Bot):
         else:
             await ctx.send(f"Нет участников в розыгрыше '{key_name}'")
     
-    @commands.command(name='time')
+    @commands.command(name=None)
     async def check_time(self, ctx):
         user_time = await self.db.get_user_watch_time(str(ctx.author.id))
         await ctx.send(f"@{ctx.author.name}, время просмотра этого стрима: {user_time} минут")
     
-    @commands.command(name='participants')
+    @commands.command(name=None)
     async def show_participants(self, ctx, key_name: str = None):
         if not ctx.author.is_mod and not ctx.author.is_broadcaster:
             return
         
         if not key_name:
             if not self.current_giveaway:
-                await ctx.send("Нет активного розыгрыша. Использование: !participants <ключ>")
+                await ctx.send(f"Нет активного розыгрыша. Использование: !{self.config['commands']['participants']} <ключ>")
                 return
             key_name = self.current_giveaway
         
         count = await self.db.get_participants_count(key_name)
         await ctx.send(f"Участников в розыгрыше '{key_name}': {count}")
     
-    @commands.command(name='current')
-    async def current_giveaway(self, ctx):
+    @commands.command(name=None)
+    async def current_giveaway_info(self, ctx):
         if self.current_giveaway:
             count = await self.db.get_participants_count(self.current_giveaway)
             await ctx.send(f"Активный розыгрыш: '{self.current_giveaway}' (участников: {count})")
