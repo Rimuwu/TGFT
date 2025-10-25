@@ -10,6 +10,10 @@ TGFT — Twitch Giveaway For Time
    - `oauth_token` - OAuth токен бота
    - `channel` - название канала
 
+   https://twitchio.dev/en/stable/getting-started/quickstart.html
+   https://dev.twitch.tv/console/extensions/
+   https://twitchtokengenerator.com
+
 2. Запуск через Docker:
 ```bash
 docker-compose up -d
