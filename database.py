@@ -9,15 +9,6 @@ class Database:
     async def init_db(self):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute('''
-                CREATE TABLE IF NOT EXISTS users (
-                    user_id TEXT PRIMARY KEY,
-                    username TEXT,
-                    stream_watch_time INTEGER DEFAULT 0,
-                    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            await db.execute('''
                 CREATE TABLE IF NOT EXISTS giveaway_participants (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     key_name TEXT,
@@ -28,42 +19,9 @@ class Database:
                 )
             ''')
             
-            await db.execute('''
-                CREATE TABLE IF NOT EXISTS stream_sessions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    is_active BOOLEAN DEFAULT 1
-                )
-            ''')
-            
             await db.commit()
     
-    
-    async def start_new_stream(self):
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute('UPDATE stream_sessions SET is_active = 0')
-            await db.execute('INSERT INTO stream_sessions (is_active) VALUES (1)')
-            await db.execute('UPDATE users SET stream_watch_time = 0')
-            await db.commit()
-    
-    async def update_user_time(self, user_id: str, username: str):
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute('''
-                INSERT OR REPLACE INTO users (user_id, username, stream_watch_time, last_seen)
-                VALUES (?, ?, 
-                    COALESCE((SELECT stream_watch_time FROM users WHERE user_id = ?), 0) + 1,
-                    CURRENT_TIMESTAMP)
-            ''', (user_id, username, user_id))
-            await db.commit()
-    
-    async def get_user_watch_time(self, user_id: str) -> int:
-        async with aiosqlite.connect(self.db_path) as db:
-            cursor = await db.execute('SELECT stream_watch_time FROM users WHERE user_id = ?', (user_id,))
-            result = await cursor.fetchone()
-            return result[0] if result else 0
-    
-    async def add_to_giveaway(self, key_name: str, 
-                              user_id: str, username: str) -> bool:
+    async def add_to_giveaway(self, key_name: str, user_id: str, username: str) -> bool:
         async with aiosqlite.connect(self.db_path) as db:
             try:
                 await db.execute(
